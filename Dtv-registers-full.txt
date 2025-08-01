@@ -1,0 +1,267 @@
+DTV Register startup values
+$d036 76
+$d037 does nothing
+
+
+
+ddDTV Registers
+
+Magic Enable Bit
+$D03f bit[1] Enables VICII extensions
+53311
+
+VICII Extensions
+All bitmap colors are expanded to
+8 bits per pixel when in extended mode
+and high color.
+
+$d036 ColorBankLow
+$d037 ColorBankHigh
+$d038 LinearModuloLow
+53304
+$d039 LinearModuloHigh
+$d03a LinearStartLoW
+53306
+$d03b LinearStartHigh
+$d03c Bit[0] LinearAddressing
+53308
+      1 = Linear
+      0 = Character
+
+      Linear addressing mode the color
+      address is 22 bits of
+      "ColorBankHigh &
+      ColorBankLow[7:6] &
+      LinearCount[15:0]"
+
+      Graphics data is 22 bits of
+      "GBank & LinearCount[15:0]"
+
+      Bit[2] HiColor
+      1 = High Color
+      0 = Original VIC
+
+      Modes under high color
+
+      ecm = 0
+      bmm = 0
+      mcm = 0
+
+      When Pixel = 1
+        COlor Memory (8 bits)
+      else
+        bkgnd0_color (8 bits)
+
+      ecm = 0
+      bmm = 1
+      mcm = 0
+
+      When Pixel = 1
+        "0000" & CharData[7:4]
+      else
+        "0000" & CharData[3:0]
+
+      ecm = 1
+      bmm = 0
+      mcm = 0
+
+      When Pixel = 1
+        COlor Memory
+      else if CharData[7:6]
+        00  bkgnd0_color
+        01  bkgnd1_color
+        10  bkgnd2_color
+        11  bkgnd3_color
+
+      ecm = 0
+      bmm = 0
+      mcm = 1
+
+      When Color Memory[3] = 1
+        When Pixel[1:0]
+          00  bkgnd0_color
+          01  bkgnd1_color
+          10  bkgnd2_color
+          11  Color Memory[7:4] &
+              '0' & Color Memory[2:0]
+        else
+           when Pixel = 1
+             Color Memory[7:4] &
+             '0' &  Color Memory[2:0]
+           else
+             bkgnd0_color
+
+      ecm = 0
+      bmm = 1
+      mcm = 1
+
+      When Pixel =
+        00  bkgnd0_color
+        01  "0000" & Character Data[7:4]
+        10  "0000" & Character Data[3:0]
+        11  Color Memory
+
+      ecm = 1
+      bmm = 1
+      mcm = 1
+
+          4 bits per pixel 160x200 mode
+
+          color_stored[3:0] &
+          Pixel[1:0] from B bank &
+          Pixel[1:0] from A bank
+
+      ecm = 1
+      bmm = 1
+      mcm = 0
+         when bank A Pixel = 0 and
+              bank B Pixel = 0
+              bkgnd0_color
+         when bank A Pixel = 0 and
+              bank B Pixel = 1
+	      "0000" & CharData[7:4]
+         when bank A Pixel = 1 and
+              bank B Pixel = 0
+	      "0000" & CharData[3:0]
+         when bank A Pixel = 1 and
+              bank B Pixel = 1
+              color memory
+
+
+$d03d GBankA[5:0]
+
+      GBankA selects graphics bank
+      for normal vic color mode and
+      lower data for high color modes.
+
+$d03e GBankB[5:0]
+
+      Upper graphics bank
+      for high color modes.
+
+DMA Controller
+Source start location
+$D300 Source[7:0]
+$D301 Source[15:8]
+$D302 Source[23:16]
+bits 23:22 select memory mode
+00  ROM
+01  RAM
+10  Ram & Registers
+
+Destination start location
+$D303 Destination[7:0]
+$D304 Destination[15:8]
+$D305 Destination[23:16]
+bits 23:22 select memory mode
+00  ROM
+01  RAM
+10  Ram & Registers
+
+Steps between data reads
+$D306 SourceStep[7:0]
+$D307 SourceStep[15:8]
+
+Steps between data reads
+$D308 DestinationStep[7:0]
+$D309 DestinationStep[15:8]
+
+Total length of DMA
+$D30a Length[7:0]
+$D30b Length[15:8]
+
+Modulo to be added or
+subtracted at end of line count
+$D30c Source Modulo[7:0]
+$D30d SourceModulo[15:8]
+$D30e DestModulo[7:0]
+$D30f DestModulo[15:8]
+
+Length off data to be accessed
+before adding or subtracting modulo
+$D310 SourceLineLength[7:0]
+$D311 SourceLineLength[15:8]
+$D312 DestLineLength[7:0]
+$D313 DestLineLength[15:8]
+
+ClearIRQ is a strobe
+Write a '1' here to reset IRQ
+$D31d Bit[0] ClearIRQ
+
+Enable modulo calculations
+$D31e Bit[0] SourceModuloEnable
+      Bit[1] DestModuloEnable
+
+$D31f Bit[0] Start
+      Force start a dma access
+      Bit[1] Swap
+      Swap bytes with source
+      and destination
+      Bit[2] SourceDirection
+      Direction controls 
+      ('1' is positive)
+      Bit[3] DestDirection
+      Bit[4] VICIRQStart
+      '1' enables a dma to start
+      on rising edge of irq 
+      (Must be in idle state before
+      IRQ start is triggered)
+      Bit[5] CIAIRQStart
+      CIA IRQ start (rising edge)
+      Bit[6] VBlankStart
+      Start on Vblank (on rising edge)
+      Bit[7] IRQEnable
+      Enable irqs to be generated when
+      set to '1'
+
+Pallete 
+$D200 - 15  Upper nibble sets Chroma
+            Lower nibble is luma
+
+Hardware and Know Issues
+
+nDMAWrite signals an external write 
+during DMA DMACycles.  nIORD and
+nIOWR are output only.
+
+USR[7:0] port is output only due to a
+synthesis error.
+
+Pixel[7:0] are raw pixel data output
+before luma and chroma lookup tables.
+
+PS-2 data and clk are for keyboards only.
+Keyboard statemachine has issues with f7
+and pressing shift at the same time as
+another key.
+
+nNMI may have slight timing problems 
+that cause digi playback problems.
+
+Cartridge port signals are generated
+for internal use, at the time
+of this writing I have not had time to
+check for inversion or timing delay
+problems. (Better check before using)
+
+IO's on the ASIC are not 5v tolerant,
+so put 100ohm series resistors.
+
+Programs with bad IRQ handlers (Jumpman)
+are having problems with bits in VICII
+irq register.
+
+Expanded sprites have 1/4 pixel gap and
+may have a problem with y expansion in 
+the left border.
+
+VIC has small timing delays with color
+update times, which causes problems with
+disk throw in SummerGames.
+
+Enjoy hacking the c64 ASIC.  Jeri
+     
+
+
+
+ 
